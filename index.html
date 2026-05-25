@@ -287,24 +287,25 @@
     }
 
     function loadTestData() {
-        const members = ['Richa', 'Nirmala', 'Rakhi', 'Payal', 'Yoshita', 'Maheshwari', 'Purvaja'];
+         const members = ['Alex', 'Sam', 'Riley', 'Jordan', 'Taylor', 'Casey'];
         const transactions = [
-            { d: 'Cake', a: 3.00 }, { d: 'Food', a: 310.00 }, { d: 'Decorations', a: 52.00 },
-            { d: 'Drinks', a: 117.20 }
+            { d: 'Gas Station', a: 65.50 }, { d: 'Hotel Booking', a: 450.00 }, { d: 'Dinner Party', a: 185.00 },
+            { d: 'Museum Tickets', a: 120.00 }, { d: 'Grocery Run', a: 95.20 }, { d: 'Highway Tolls', a: 22.00 },
+            { d: 'Coffee & Snacks', a: 34.50 }, { d: 'Parking Fee', a: 15.00 }, { d: 'Ice Cream Shop', a: 40.80 }, { d: 'Boat Rental', a: 300.00 }
         ];
         state.people = [...members]; 
         state.expenses = [];
         transactions.forEach((t, i) => {
-            let bd = {}; members.forEach(m => bd[m] = t.a / members.length);
+            let bd = {}; members.forEach(m => bd[m] = t.a / 6);
             state.expenses.push({
-                id: Date.now() + i, desc: t.d, amount: t.a, payer: members[i % members.length],
-                date: "23 May 2026", rawDate: "2026-05-23", mode: 'even',
+                id: Date.now() + i, desc: t.d, amount: t.a, payer: members[i % 6],
+                date: "16 May 2026", rawDate: "2026-05-16", mode: 'even',
                 breakdown: bd, participants: [...members]
             });
         });
         participants = [...members]; 
         saveAndRefresh();
-        showToast("Loaded graduation records");
+        showToast("10 records added");
     }
 
     function exportToPDF() {
