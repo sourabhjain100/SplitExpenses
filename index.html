@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Split Expenses</title>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght=400;600;700;800&family=JetBrains+Mono:wght=600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800;900&family=JetBrains+Mono:wght=600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -13,7 +13,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Public Sans', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
                     colors: { primary: '#4F46E5', secondary: '#F59E0B', dark: '#1E293B' }
                 }
             }
@@ -68,15 +68,11 @@
 <div id="capture-area" class="max-w-md mx-auto min-h-screen flex flex-col p-4 space-y-3 bg-[#F1F5F9]">
     
     <header id="main-header" class="soft-card p-3 flex justify-between items-center bg-white border-none">
-        <div class="flex items-center gap-1 max-w-[240px] overflow-hidden group">
+        <div class="flex items-center gap-1 w-full max-w-full overflow-hidden group">
             <h1 id="display-group-name" contenteditable="true" onblur="updateGroupName()" placeholder="Enter Title" class="text-xl font-800 tracking-tight text-dark outline-none truncate pr-1"></h1>
             <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 select-none pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" data-html2canvas-ignore>
                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
             </svg>
-        </div>
-        <div class="flex gap-1.5 shrink-0" data-html2canvas-ignore>
-            <button onclick="loadTestData()" class="w-14 bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-800 py-1.5 rounded-full uppercase transition-colors shadow-sm">Test</button>
-            <button onclick="confirmClear()" class="w-14 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-800 py-1.5 rounded-full uppercase transition-colors shadow-sm">Clear</button>
         </div>
     </header>
 
@@ -124,6 +120,11 @@
             </select>
             <div id="split-details" class="space-y-1.5 max-h-36 overflow-y-auto pr-1"></div>
             <button id="submit-btn" onclick="saveExpense()" class="w-full nav-btn bg-dark text-white py-2.5 text-[11px] font-800 uppercase tracking-widest shadow-md">Save Transaction</button>
+            
+            <div class="flex gap-2 pt-1" data-html2canvas-ignore>
+                <button onclick="loadTestData()" class="flex-1 bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-800 py-2 rounded-xl uppercase transition-colors shadow-sm tracking-wider">Load Test Data</button>
+                <button onclick="confirmClear()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-800 py-2 rounded-xl uppercase transition-colors shadow-sm tracking-wider">Reset All</button>
+            </div>
         </section>
     </div>
 
@@ -149,9 +150,9 @@
             <div class="space-y-0 border border-slate-200 rounded-lg overflow-hidden bg-slate-50/50 font-sans">
                 <div class="grid grid-cols-[1.3fr_1fr_1fr_1fr] gap-0 bg-slate-100/80 border-b border-slate-200 text-[10px] font-800 text-slate-500 uppercase tracking-wider text-right py-2">
                     <span class="text-left px-2 border-r border-slate-200/60">Member</span>
-                    <span class="px-1 border-r border-slate-200/60">Share Owed</span>
-                    <span class="px-1 border-r border-slate-200/60">Total Spent</span>
-                    <span class="px-2">Net Bal</span>
+                    <span class="px-1 border-r border-slate-200/60">Spent</span>
+                    <span class="px-1 border-r border-slate-200/60">Owed</span>
+                    <span class="px-2">Net</span>
                 </div>
                 <div id="member-table-rows" class="space-y-0 bg-white divide-y divide-slate-100"></div>
             </div>
@@ -231,15 +232,51 @@
             if (amount < -0.01) debtors.push({ name, amount: Math.abs(amount) });
             else if (amount > 0.01) creditors.push({ name, amount });
         });
-        debtors.sort((a, b) => b.amount - a.amount); creditors.sort((a, b) => b.amount - a.amount);
-        let plan = [], i = 0, j = 0;
+        
+        let plan = [];
+
+        for (let i = 0; i < debtors.length; i++) {
+            for (let j = 0; j < creditors.length; j++) {
+                if (Math.abs(debtors[i].amount - creditors[j].amount) < 0.01 && debtors[i].amount > 0) {
+                    plan.push({ from: debtors[i].name, to: creditors[j].name, amount: debtors[i].amount });
+                    debtors[i].amount = 0;
+                    creditors[j].amount = 0;
+                }
+            }
+        }
+
+        creditors.sort((a, b) => b.amount - a.amount);
+        for (let j = 0; j < creditors.length; j++) {
+            if (creditors[j].amount < 0.01) continue;
+            
+            debtors.sort((a, b) => b.amount - a.amount);
+            for (let i = 0; i < debtors.length; i++) {
+                if (debtors[i].amount >= creditors[j].amount) {
+                    plan.push({ from: debtors[i].name, to: creditors[j].name, amount: creditors[j].amount });
+                    debtors[i].amount -= creditors[j].amount;
+                    creditors[j].amount = 0;
+                    break;
+                }
+            }
+        }
+
+        debtors.sort((a, b) => b.amount - a.amount);
+        creditors.sort((a, b) => b.amount - a.amount);
+        let i = 0, j = 0;
         while (i < debtors.length && j < creditors.length) {
+            if (debtors[i].amount < 0.01) { i++; continue; }
+            if (creditors[j].amount < 0.01) { j++; continue; }
+
             let payAmount = Math.min(debtors[i].amount, creditors[j].amount);
             plan.push({ from: debtors[i].name, to: creditors[j].name, amount: payAmount });
-            debtors[i].amount -= payAmount; creditors[j].amount -= payAmount;
-            if (debtors[i].amount < 0.01) i++; if (creditors[j].amount < 0.01) j++;
+            debtors[i].amount -= payAmount;
+            creditors[j].amount -= payAmount;
+
+            if (debtors[i].amount < 0.01) i++;
+            if (creditors[j].amount < 0.01) j++;
         }
-        return plan;
+
+        return plan.filter(p => p.amount > 0.01);
     }
 
     function saveExpense() {
@@ -267,7 +304,7 @@
         if (editId) { state.expenses[state.expenses.findIndex(e => e.id == editId)] = entry; showToast("Updated"); }
         else { state.expenses.push(entry); showToast("Saved"); }
         resetForm(); saveAndRefresh();
-        switchTab('history');
+        switchTab('setup');
     }
 
     function deleteExpense(id) {
@@ -351,13 +388,13 @@
         });
 
         const balRows = state.people.map(p => [
-            p.toUpperCase(), `$${totalOwedMap[p].toFixed(2)}`, `$${totalSpentMap[p].toFixed(2)}`,
+            p.toUpperCase(), `$${totalSpentMap[p].toFixed(2)}`, `$${totalOwedMap[p].toFixed(2)}`,
             finalBalances[p] >= 0 ? `$${finalBalances[p].toFixed(2)}` : `-$${Math.abs(finalBalances[p]).toFixed(2)}`
         ]);
         
         doc.autoTable({
             startY: currentY + 16,
-            head: [[ 'MEMBER', 'SHARE OWED', 'TOTAL SPENT', 'NET BALANCE' ]],
+            head: [[ 'MEMBER', 'SPENT', 'OWED', 'NET' ]],
             body: balRows,
             theme: 'grid',
             styles: { fontSize: 8, cellPadding: 3 },
@@ -401,7 +438,6 @@
             link.click();
         };
 
-        // --- IMAGE 1: SUMMARY OVERVIEW MATRIX (CLEAN TITLE) ---
         scratch.innerHTML = '';
         
         const headClone = document.getElementById('main-header').cloneNode(true);
@@ -424,7 +460,6 @@
         const summaryCanvas = await html2canvas(scratch, { scale: 2, backgroundColor: '#F1F5F9' });
         triggerDownload(summaryCanvas, `${prefix}_Dashboard_Summary.jpg`);
 
-        // --- IMAGES 2+: DYNAMIC EXPENSE DETAIL CHUNKS (FRACTIONAL TITLES WITH "||") ---
         const totalMembers = state.people.length;
         
         let maxPerChunk = 4;
@@ -474,7 +509,7 @@
                     </div>
                     <div class="space-y-0.5 pt-1">
                         ${Object.entries(e.breakdown).filter(([_, v]) => v !== 0).map(([n, v]) => `
-                            <div class="flex justify-between text-[11px] font-700 text-slate-500 uppercase">
+                            <div class="flex justify-between text-[11px] font-700 text-slate-500 uppercase py-0.5">
                                 <span>${n}</span>
                                 <span class="font-mono">$${v.toFixed(2)}</span>
                             </div>
@@ -566,9 +601,9 @@
                 return `
                     <div class="grid grid-cols-[1.3fr_1fr_1fr_1fr] gap-0 py-1.5 items-center text-right text-[11px] font-sans text-slate-600">
                         <span class="text-left font-700 text-dark uppercase px-2 border-r border-slate-100">${p}</span>
-                        <span class="px-1 border-r border-slate-100 font-mono">$${owedMap[p].toFixed(2)}</span>
                         <span class="px-1 border-r border-slate-100 font-mono">$${spentMap[p].toFixed(2)}</span>
-                        <span class="${balClass} px-2 font-mono">${bal >= 0 ? '+' : ''}${bal.toFixed(2)}</span>
+                        <span class="px-1 border-r border-slate-100 font-mono">$${owedMap[p].toFixed(2)}</span>
+                        <span class="${balClass} px-2 font-mono">${bal >= 0 ? '+$' : '-$'}${Math.abs(bal).toFixed(2)}</span>
                     </div>`;
             }).join('');
         }
