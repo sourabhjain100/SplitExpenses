@@ -159,7 +159,11 @@
         </section>
 
         <section id="settlement-card" class="soft-card p-3 space-y-2 bg-indigo-50/40 border-indigo-100 border">
-            <label class="text-[10px] font-800 text-primary uppercase tracking-widest block">Settlement Strategy</label>
+            <div class="flex justify-between items-center border-b border-indigo-100/40 pb-1.5">
+                <label class="text-[10px] font-800 text-primary uppercase tracking-widest block">Settlement Strategy</label>
+                <select id="strategy-selector" onchange="renderWithSelectedStrategy()" class="bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-[10px] font-800 uppercase tracking-wide text-slate-600 outline-none">
+                </select>
+            </div>
             <div id="settlement-list" class="space-y-1"></div>
         </section>
     </div>
@@ -171,6 +175,7 @@
     let participants = [];
     let expandedId = null;
     let activeTab = 'setup';
+    let currentSelectedStrategyKey = 'option1';
 
     function switchTab(tabId) {
         activeTab = tabId;
@@ -226,57 +231,193 @@
         return balances;
     }
 
-    function calculateSettlements(balances) {
+    function runStrategyEngine(strategyKey, balances) {
+        let plan = [];
         let debtors = [], creditors = [];
         Object.entries(balances).forEach(([name, amount]) => {
-            if (amount < -0.01) debtors.push({ name, amount: Math.abs(amount) });
-            else if (amount > 0.01) creditors.push({ name, amount });
+            let rounded = Math.round(amount * 100) / 100;
+            if (rounded < -0.01) debtors.push({ name, amount: Math.abs(rounded) });
+            else if (rounded > 0.01) creditors.push({ name, amount: rounded });
         });
-        
-        let plan = [];
 
-        for (let i = 0; i < debtors.length; i++) {
-            for (let j = 0; j < creditors.length; j++) {
-                if (Math.abs(debtors[i].amount - creditors[j].amount) < 0.01 && debtors[i].amount > 0) {
-                    plan.push({ from: debtors[i].name, to: creditors[j].name, amount: debtors[i].amount });
-                    debtors[i].amount = 0;
-                    creditors[j].amount = 0;
+        if (strategyKey === 'option1') {
+            // PASS 1: Exact One-to-One Matches
+            for (let i = 0; i < debtors.length; i++) {
+                if (debtors[i].amount < 0.01) continue;
+                for (let j = 0; j < creditors.length; j++) {
+                    if (creditors[j].amount < 0.01) continue;
+                    if (Math.abs(debtors[i].amount - creditors[j].amount) < 0.01) {
+                        plan.push({ from: debtors[i].name, to: creditors[j].name, amount: debtors[i].amount });
+                        debtors[i].amount = 0;
+                        creditors[j].amount = 0;
+                        break;
+                    }
                 }
             }
-        }
 
-        creditors.sort((a, b) => b.amount - a.amount);
-        for (let j = 0; j < creditors.length; j++) {
-            if (creditors[j].amount < 0.01) continue;
-            
+            // PASS 2: Complete Liquidation of Minor Creditors (Anti-Fragmentation)
+            creditors.sort((a, b) => a.amount - b.amount);
+            for (let j = 0; j < creditors.length; j++) {
+                if (creditors[j].amount < 0.01) continue;
+                debtors.sort((a, b) => b.amount - a.amount);
+                for (let i = 0; i < debtors.length; i++) {
+                    if (debtors[i].amount >= creditors[j].amount - 0.005) {
+                        plan.push({ from: debtors[i].name, to: creditors[j].name, amount: creditors[j].amount });
+                        debtors[i].amount -= creditors[j].amount;
+                        creditors[j].amount = 0;
+                        break;
+                    }
+                }
+            }
+
+            // PASS 3: Low-Threshold Avoidance (< $5.00)
+            creditors.sort((a, b) => b.amount - a.amount);
             debtors.sort((a, b) => b.amount - a.amount);
             for (let i = 0; i < debtors.length; i++) {
-                if (debtors[i].amount >= creditors[j].amount) {
-                    plan.push({ from: debtors[i].name, to: creditors[j].name, amount: creditors[j].amount });
-                    debtors[i].amount -= creditors[j].amount;
-                    creditors[j].amount = 0;
-                    break;
+                if (debtors[i].amount < 0.01) continue;
+                for (let j = 0; j < creditors.length; j++) {
+                    if (creditors[j].amount < 0.01) continue;
+                    
+                    let potentialPay = Math.min(debtors[i].amount, creditors[j].amount);
+                    if (potentialPay < 5.00) {
+                        let totalDebtLeft = debtors.reduce((s, d) => s + d.amount, 0);
+                        if (totalDebtLeft > 5.00) continue; 
+                    }
+                    
+                    plan.push({ from: debtors[i].name, to: creditors[j].name, amount: potentialPay });
+                    debtors[i].amount -= potentialPay;
+                    creditors[j].amount -= potentialPay;
+                    if (debtors[i].amount < 0.01) break;
                 }
             }
-        }
 
-        debtors.sort((a, b) => b.amount - a.amount);
-        creditors.sort((a, b) => b.amount - a.amount);
-        let i = 0, j = 0;
-        while (i < debtors.length && j < creditors.length) {
-            if (debtors[i].amount < 0.01) { i++; continue; }
-            if (creditors[j].amount < 0.01) { j++; continue; }
+            // PASS 4: Greedy Pool Clearing
+            let loops = 0;
+            while (loops < 200) {
+                debtors.sort((a, b) => b.amount - a.amount);
+                creditors.sort((a, b) => b.amount - a.amount);
+                let activeDebtor = debtors.find(d => d.amount > 0.01);
+                let activeCreditor = creditors.find(c => c.amount > 0.01);
+                if (!activeDebtor || !activeCreditor) break;
+                
+                let finalPay = Math.min(activeDebtor.amount, activeCreditor.amount);
+                plan.push({ from: activeDebtor.name, to: activeCreditor.name, amount: finalPay });
+                activeDebtor.amount -= finalPay;
+                activeCreditor.amount -= finalPay;
+                loops++;
+            }
 
-            let payAmount = Math.min(debtors[i].amount, creditors[j].amount);
-            plan.push({ from: debtors[i].name, to: creditors[j].name, amount: payAmount });
-            debtors[i].amount -= payAmount;
-            creditors[j].amount -= payAmount;
+        } else if (strategyKey === 'option2') {
+            creditors.sort((a, b) => b.amount - a.amount);
+            for (let j = 0; j < creditors.length; j++) {
+                if (creditors[j].amount < 0.01) continue;
+                debtors.sort((a, b) => b.amount - a.amount);
+                for (let i = 0; i < debtors.length; i++) {
+                    if (debtors[i].amount >= creditors[j].amount) {
+                        plan.push({ from: debtors[i].name, to: creditors[j].name, amount: creditors[j].amount });
+                        debtors[i].amount -= creditors[j].amount;
+                        creditors[j].amount = 0;
+                        break;
+                    }
+                }
+            }
+            let i = 0, j = 0;
+            while (i < debtors.length && j < creditors.length) {
+                if (debtors[i].amount < 0.01) { i++; continue; }
+                if (creditors[j].amount < 0.01) { j++; continue; }
 
-            if (debtors[i].amount < 0.01) i++;
-            if (creditors[j].amount < 0.01) j++;
+                let payAmount = Math.min(debtors[i].amount, creditors[j].amount);
+                plan.push({ from: debtors[i].name, to: creditors[j].name, amount: payAmount });
+                debtors[i].amount -= payAmount;
+                creditors[j].amount -= payAmount;
+                if (debtors[i].amount < 0.01) i++;
+                if (creditors[j].amount < 0.01) j++;
+            }
+
+        } else if (strategyKey === 'option3') {
+            for (let i = 0; i < debtors.length; i++) {
+                for (let j = 0; j < creditors.length; j++) {
+                    if (Math.abs(debtors[i].amount - creditors[j].amount) < 0.01 && debtors[i].amount > 0) {
+                        plan.push({ from: debtors[i].name, to: creditors[j].name, amount: debtors[i].amount });
+                        debtors[i].amount = 0;
+                        creditors[j].amount = 0;
+                    }
+                }
+            }
+            debtors.sort((a, b) => b.amount - a.amount);
+            creditors.sort((a, b) => b.amount - a.amount);
+            let i = 0, j = 0;
+            while (i < debtors.length && j < creditors.length) {
+                if (debtors[i].amount < 0.01) { i++; continue; }
+                if (creditors[j].amount < 0.01) { j++; continue; }
+
+                let payAmount = Math.min(debtors[i].amount, creditors[j].amount);
+                plan.push({ from: debtors[i].name, to: creditors[j].name, amount: payAmount });
+                debtors[i].amount -= payAmount;
+                creditors[j].amount -= payAmount;
+                if (debtors[i].amount < 0.01) i++;
+                if (creditors[j].amount < 0.01) j++;
+            }
+
+        } else if (strategyKey === 'option4') {
+            if (state.people.length > 0) {
+                let sortedPeople = [...state.people].sort((a, b) => (balances[b] || 0) - (balances[a] || 0));
+                let hub = sortedPeople[0];
+                Object.entries(balances).forEach(([name, amount]) => {
+                    if (name === hub) return;
+                    let rounded = Math.round(amount * 100) / 100;
+                    if (rounded < -0.01) plan.push({ from: name, to: hub, amount: Math.abs(rounded) });
+                    else if (rounded > 0.01) plan.push({ from: hub, to: name, amount: rounded });
+                });
+            }
         }
 
         return plan.filter(p => p.amount > 0.01);
+    }
+
+    function getPlanFingerprint(plan) {
+        let sortedTransfers = plan.map(p => `${p.from}->${p.to}:${p.amount.toFixed(2)}`).sort();
+        return sortedTransfers.join('|');
+    }
+
+    function calculateSettlements(balances) {
+        const totalOptions = ['option1', 'option2', 'option3', 'option4'];
+        let outcomeMap = {};
+        let distinctOptions = [];
+
+        totalOptions.forEach(opt => {
+            let plan = runStrategyEngine(opt, balances);
+            let fingerprint = getPlanFingerprint(plan);
+            if (!outcomeMap.hasOwnProperty(fingerprint)) {
+                outcomeMap[fingerprint] = opt;
+                distinctOptions.push(opt);
+            }
+        });
+
+        const selector = document.getElementById('strategy-selector');
+        if (selector) {
+            let labelIndex = 1;
+            let optionsHTML = distinctOptions.map(opt => {
+                let isSelected = opt === currentSelectedStrategyKey ? 'selected' : '';
+                return `<option value="${opt}" ${isSelected}>OPTION ${labelIndex++}</option>`;
+            }).join('');
+            
+            selector.innerHTML = optionsHTML;
+            if (!distinctOptions.includes(currentSelectedStrategyKey) && distinctOptions.length > 0) {
+                currentSelectedStrategyKey = distinctOptions[0];
+                if(selector) selector.value = currentSelectedStrategyKey;
+            }
+        }
+
+        return runStrategyEngine(currentSelectedStrategyKey, balances);
+    }
+
+    function renderWithSelectedStrategy() {
+        const selector = document.getElementById('strategy-selector');
+        if (selector) {
+            currentSelectedStrategyKey = selector.value;
+        }
+        render();
     }
 
     function saveExpense() {
@@ -324,7 +465,7 @@
     }
 
     function loadTestData() {
-         const members = ['Alex', 'Sam', 'Riley', 'Jordan', 'Taylor', 'Casey'];
+        const members = ['Alex', 'Sam', 'Riley', 'Jordan', 'Taylor', 'Casey'];
         const transactions = [
             { d: 'Gas Station', a: 65.50 }, { d: 'Hotel Booking', a: 450.00 }, { d: 'Dinner Party', a: 185.00 },
             { d: 'Museum Tickets', a: 120.00 }, { d: 'Grocery Run', a: 95.20 }, { d: 'Highway Tolls', a: 22.00 },
@@ -345,87 +486,6 @@
         showToast("10 records added");
     }
 
-    function exportToPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        const primaryColor = [79, 70, 229];
-        const slateColor = [51, 65, 85];
-        const gName = (state.groupName || "Enter Title").toUpperCase();
-
-        doc.setFillColor(...primaryColor);
-        doc.rect(0, 0, 210, 30, 'F');
-        doc.textColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.text(gName, 15, 20);
-
-        doc.textColor(...slateColor);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("SETTLEMENT PLAN", 15, 45);
-
-        const settlements = calculateSettlements(calculateBalances());
-        const setRows = settlements.length > 0 
-            ? settlements.map(s => [s.from.toUpperCase(), s.to.toUpperCase(), `$${s.amount.toFixed(2)}`])
-            : [["ALL BALANCED", "-", "$0.00"]];
-
-        doc.autoTable({
-            startY: 50,
-            head: [[ 'SENDER', 'RECEIVER', 'AMOUNT' ]],
-            body: setRows,
-            theme: 'grid',
-            styles: { fontSize: 8, cellPadding: 3 },
-            headStyles: { fillColor: primaryColor }
-        });
-
-        const currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 50;
-        doc.text("NET BALANCE SUMMARY", 15, currentY + 12);
-        let finalBalances = calculateBalances();
-        let totalSpentMap = {}; let totalOwedMap = {};
-        state.people.forEach(p => { totalSpentMap[p] = 0; totalOwedMap[p] = 0; });
-        state.expenses.forEach(e => {
-            totalSpentMap[e.payer] += e.amount;
-            Object.entries(e.breakdown).forEach(([n, s]) => { if(totalOwedMap.hasOwnProperty(n)) totalOwedMap[n] += s; });
-        });
-
-        const balRows = state.people.map(p => [
-            p.toUpperCase(), `$${totalSpentMap[p].toFixed(2)}`, `$${totalOwedMap[p].toFixed(2)}`,
-            finalBalances[p] >= 0 ? `$${finalBalances[p].toFixed(2)}` : `-$${Math.abs(finalBalances[p]).toFixed(2)}`
-        ]);
-        
-        doc.autoTable({
-            startY: currentY + 16,
-            head: [[ 'MEMBER', 'SPENT', 'OWED', 'NET' ]],
-            body: balRows,
-            theme: 'grid',
-            styles: { fontSize: 8, cellPadding: 3 },
-            headStyles: { fillColor: slateColor }
-        });
-
-        doc.addPage();
-        doc.textColor(...slateColor);
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text("TRANSACTION LEDGER", 15, 15);
-        let ledgerY = 22;
-
-        state.expenses.forEach((e) => {
-            if (ledgerY > 240) { doc.addPage(); ledgerY = 15; }
-            const splitData = Object.entries(e.breakdown).filter(([_, val]) => val !== 0).map(([name, val]) => [name.toUpperCase(), `$${val.toFixed(2)}`]);
-            doc.autoTable({
-                startY: ledgerY,
-                head: [[{ content: `${e.date} • ${e.desc.toUpperCase()}`, colSpan: 2 }]],
-                body: [['PAID BY', e.payer.toUpperCase()], ['TOTAL', `$${e.amount.toFixed(2)}`], ...splitData],
-                theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 2 },
-                headStyles: { fillColor: [71, 85, 105] },
-                pageBreak: 'avoid'
-            });
-            ledgerY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 6 : ledgerY + 30;
-        });
-        doc.save(`${gName.replace(/\s+/g, '_')}_Summary.pdf`);
-        showToast("PDF Saved");
-    }
-
     async function exportToJPG() {
         const scratch = document.getElementById('canvas-scratchpad');
         const prefix = (state.groupName || "Split_Expenses").replace(/\s+/g, '_');
@@ -439,7 +499,6 @@
         };
 
         scratch.innerHTML = '';
-        
         const headClone = document.getElementById('main-header').cloneNode(true);
         const titleWrap = headClone.querySelector('.flex.items-center');
         if (titleWrap) titleWrap.className = "flex items-center gap-1 w-full";
@@ -449,7 +508,6 @@
             mainTitle.className = "text-xl font-800 tracking-tight text-dark outline-none pr-1";
             mainTitle.innerText = cleanTitleName;
         }
-        
         scratch.appendChild(headClone);
         
         const summaryClone = document.getElementById('unified-metrics-card').cloneNode(true);
@@ -460,24 +518,21 @@
         const summaryCanvas = await html2canvas(scratch, { scale: 2, backgroundColor: '#F1F5F9' });
         triggerDownload(summaryCanvas, `${prefix}_Dashboard_Summary.jpg`);
 
-        const totalMembers = state.people.length;
-        
-        let maxPerChunk = 4;
-        if (totalMembers > 12) maxPerChunk = 1;
-        else if (totalMembers > 6) maxPerChunk = 2;
-        else if (totalMembers > 4) maxPerChunk = 3;
-
         const chronicEntries = state.expenses.slice().reverse();
         if (chronicEntries.length === 0) {
             showToast("Snapshots Exported");
             return;
         }
 
+        let maxPerChunk = 4;
+        if (state.people.length > 12) maxPerChunk = 1;
+        else if (state.people.length > 6) maxPerChunk = 2;
+        else if (state.people.length > 4) maxPerChunk = 3;
+
         const totalChunks = Math.ceil(chronicEntries.length / maxPerChunk);
         
         for (let idx = 0; idx < chronicEntries.length; idx += maxPerChunk) {
             scratch.innerHTML = '';
-            
             const chunkHead = document.getElementById('main-header').cloneNode(true);
             const chunkTitleWrap = chunkHead.querySelector('.flex.items-center');
             if (chunkTitleWrap) chunkTitleWrap.className = "flex items-center gap-1 w-full";
@@ -492,13 +547,11 @@
 
             const wrapBox = document.createElement('div');
             wrapBox.className = 'space-y-2 pb-2';
-            
             const sliceChunk = chronicEntries.slice(idx, idx + maxPerChunk);
             
             sliceChunk.forEach(e => {
                 const card = document.createElement('div');
                 card.className = 'soft-card p-3 bg-white space-y-2';
-                
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2 w-full">
                         <h4 class="font-800 text-sm text-dark uppercase break-words flex-1">${e.desc}</h4>
@@ -520,7 +573,6 @@
             });
             
             scratch.appendChild(wrapBox);
-            
             const ledgerCanvas = await html2canvas(scratch, { scale: 2, backgroundColor: '#F1F5F9' });
             const chunkFileIndex = Math.floor(idx / maxPerChunk) + 1;
             triggerDownload(ledgerCanvas, `${prefix}_Ledger_Part_${chunkFileIndex}.jpg`);
