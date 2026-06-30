@@ -31,7 +31,7 @@
         .nav-btn:active { transform: scale(0.98); }
         .input-box { width: 100%; padding: 0.6rem 0.8rem; background: #F8FAFC; border: 2px solid transparent; border-radius: 12px; font-weight: 500; outline: none; transition: all 0.15s; }
         .input-box:focus { background: white; border-color: #4F46E5; }
-        .tab-btn { border-bottom: 2px solid transparent; transition: all 0.15s; }
+        .tab-btn { border-bottom: 2px solid transparent; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding-top: 6px; padding-bottom: 6px; }
         .tab-btn.active { color: #4F46E5; border-color: #4F46E5; font-weight: 800; }
         #validation-banner { position: fixed; top: -100px; left: 0; right: 0; z-index: 100; transition: top 0.3s; }
         #validation-banner.show { top: 0; }
@@ -68,28 +68,31 @@
 <div id="capture-area" class="max-w-md mx-auto min-h-screen flex flex-col p-4 space-y-3 bg-[#F1F5F9]">
     
     <header id="main-header" class="soft-card p-3 flex justify-between items-center bg-white border-none">
-        <div class="flex items-center gap-1 w-full max-w-full overflow-hidden group">
-            <h1 id="display-group-name" contenteditable="true" onblur="updateGroupName()" placeholder="Enter Title" class="text-xl font-800 tracking-tight text-dark outline-none truncate pr-1"></h1>
-            <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 select-none pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" data-html2canvas-ignore>
-                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-            </svg>
+        <div class="flex items-center gap-1 w-full max-w-full overflow-hidden">
+            <h1 id="top-bar-title" class="text-xl font-800 tracking-tight text-dark truncate">Group Expenses</h1>
         </div>
     </header>
 
     <div class="flex border-b border-slate-200 bg-white rounded-xl p-1 shadow-sm" data-html2canvas-ignore>
-        <button onclick="switchTab('setup')" id="tab-setup" class="tab-btn active flex-1 text-center py-2 text-[11px] font-700 text-slate-400 uppercase tracking-wider">Add & Info</button>
-        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 text-center py-2 text-[11px] font-700 text-slate-400 uppercase tracking-wider">Expenses</button>
-        <button onclick="switchTab('summary')" id="tab-summary" class="tab-btn flex-1 text-center py-2 text-[11px] font-700 text-slate-400 uppercase tracking-wider">Summary</button>
+        <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn flex-1 text-center text-[10px] font-700 text-slate-400 uppercase tracking-wider">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span>Settings</span>
+        </button>
+        <button onclick="switchTab('setup')" id="tab-setup" class="tab-btn active flex-1 text-center text-[10px] font-700 text-slate-400 uppercase tracking-wider">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Entry</span>
+        </button>
+        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 text-center text-[10px] font-700 text-slate-400 uppercase tracking-wider">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            <span>Expenses</span>
+        </button>
+        <button onclick="switchTab('summary')" id="tab-summary" class="tab-btn flex-1 text-center text-[10px] font-700 text-slate-400 uppercase tracking-wider">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+            <span>Summary</span>
+        </button>
     </div>
 
     <div id="pane-setup" class="space-y-3">
-        <section class="soft-card p-3 space-y-3">
-            <div class="flex gap-1">
-                <input id="new-member-name" type="text" placeholder="Add Name" class="input-box text-sm py-2">
-                <button onclick="addMember()" class="bg-primary text-white px-4 py-2 rounded-xl font-800 uppercase nav-btn shadow-md shadow-indigo-50">Add</button>
-            </div>
-        </section>
-
         <section id="input-container" class="soft-card p-3 space-y-3 relative">
             <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
                 <h2 id="form-title" class="text-[10px] font-800 uppercase tracking-widest text-slate-400">Transaction Details</h2>
@@ -100,7 +103,7 @@
             <div class="grid grid-cols-2 gap-2">
                 <input id="desc" type="text" placeholder="Description" class="input-box py-2 text-sm">
                 <div class="relative flex items-center">
-                    <span class="absolute left-3 font-800 text-slate-300 pointer-events-none select-none">$</span>
+                    <span id="currency-symbol-indicator" class="absolute left-3 font-800 text-slate-300 pointer-events-none select-none">$</span>
                     <input id="amount" type="number" oninput="updateSplitUI()" placeholder="0.00" class="input-box pl-6 py-2 font-mono font-bold text-dark text-sm">
                 </div>
             </div>
@@ -113,18 +116,13 @@
             <div id="people-toggle-list" class="flex flex-wrap gap-1 pt-0.5"></div>
             <select id="split-mode" onchange="updateSplitUI()" class="input-box py-2 text-[11px] font-700 bg-white border-slate-100">
                 <option value="even">SPLIT EQUALLY</option>
-                <option value="exact">EXACT AMOUNTS ($)</option>
+                <option value="exact">EXACT AMOUNTS</option>
                 <option value="percent">PERCENTAGES (%)</option>
                 <option value="share">SHARES (x)</option>
                 <option value="adjustment">ADJUSTMENT (+/-)</option>
             </select>
             <div id="split-details" class="space-y-1.5 max-h-36 overflow-y-auto pr-1"></div>
             <button id="submit-btn" onclick="saveExpense()" class="w-full nav-btn bg-dark text-white py-2.5 text-[11px] font-800 uppercase tracking-widest shadow-md">Save Transaction</button>
-            
-            <div class="flex gap-2 pt-1" data-html2canvas-ignore>
-                <button onclick="loadTestData()" class="flex-1 bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-800 py-2 rounded-xl uppercase transition-colors shadow-sm tracking-wider">Load Test Data</button>
-                <button onclick="confirmClear()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-800 py-2 rounded-xl uppercase transition-colors shadow-sm tracking-wider">Reset All</button>
-            </div>
         </section>
     </div>
 
@@ -142,8 +140,15 @@
                     <p class="text-[10px] font-800 text-slate-400 uppercase tracking-widest">Total Group Expense</p>
                     <p id="total-group-amount" class="text-2xl font-mono font-900 text-dark">-$0.00</p>
                 </div>
-                <div class="flex gap-1.5" data-html2canvas-ignore>
-                    <button onclick="exportToJPG()" class="w-14 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-800 py-1.5 rounded-full uppercase transition-colors shadow-sm">Export</button>
+                <div class="flex gap-1.5 relative" data-html2canvas-ignore id="download-dropdown-wrapper">
+                    <button onclick="toggleDownloadMenu()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-800 py-1.5 px-3 rounded-full uppercase transition-colors shadow-sm flex items-center gap-1">
+                        Download
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="download-menu" class="hidden absolute right-0 top-8 mt-1 w-24 bg-white rounded-lg shadow-xl z-50 border border-slate-100 overflow-hidden">
+                        <button onclick="exportToJPG(); toggleDownloadMenu()" class="w-full text-left px-3 py-2 text-[10px] font-800 text-slate-600 hover:bg-slate-50 hover:text-primary uppercase border-b border-slate-50 transition-colors">Image</button>
+                        <button onclick="exportToCSV(); toggleDownloadMenu()" class="w-full text-left px-3 py-2 text-[10px] font-800 text-slate-600 hover:bg-slate-50 hover:text-primary uppercase transition-colors">CSV</button>
+                    </div>
                 </div>
             </div>
             
@@ -167,19 +172,64 @@
             <div id="settlement-list" class="space-y-1"></div>
         </section>
     </div>
+
+    <div id="pane-settings" class="space-y-3 hidden">
+        <section class="soft-card p-3 space-y-3">
+            <div>
+                <label class="text-[10px] font-800 uppercase tracking-widest text-slate-400 mb-1 block">Group Title</label>
+                <div class="flex items-center gap-1 w-full border-b border-slate-200 pb-1">
+                    <h1 id="display-group-name" contenteditable="true" onblur="updateGroupName()" placeholder="Enter Title" class="text-base font-800 tracking-tight text-dark outline-none truncate pr-1 flex-1"></h1>
+                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0 select-none pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                    </svg>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-800 uppercase tracking-widest text-slate-400 mb-1 block">Currency</label>
+                <select id="currency-selector" onchange="updateCurrencySetting()" class="input-box py-2 text-[11px] font-700 bg-white border-slate-200">
+                    <option value="$">USD ($)</option>
+                    <option value="₹">INR (₹)</option>
+                    <option value="€">EUR (€)</option>
+                    <option value="£">GBP (£)</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="text-[10px] font-800 uppercase tracking-widest text-slate-400 mb-1 block">Add Member</label>
+                <div class="flex gap-1">
+                    <input id="new-member-name" type="text" placeholder="Add Name" class="input-box text-sm py-2">
+                    <button id="add-member-btn" onclick="addMember()" class="bg-primary text-white px-4 py-2 rounded-xl font-800 uppercase nav-btn shadow-md shadow-indigo-50">Add</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-800 uppercase tracking-widest text-slate-400 mb-1 block">Group Members (Tap to Edit/Delete)</label>
+                <div id="settings-member-badges" class="flex flex-wrap gap-1.5 pt-1"></div>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t border-slate-100" data-html2canvas-ignore>
+                <button onclick="loadTestData()" class="flex-1 bg-slate-700 hover:bg-slate-800 text-white text-[10px] font-800 py-2 rounded-xl uppercase transition-colors shadow-sm tracking-wider">Load Test Data</button>
+                <button onclick="confirmClear()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-800 py-2 rounded-xl uppercase transition-colors shadow-sm tracking-wider">Reset All</button>
+            </div>
+        </section>
+    </div>
 </div>
 
 <script>
     const STORAGE_KEY = 'split_pro_v44_soft';
-    let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { groupName: '', people: [], expenses: [] };
+    let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { groupName: '', people: [], expenses: [], currency: '$' };
+    if (!state.currency) state.currency = '$';
+    
     let participants = [];
     let expandedId = null;
     let activeTab = 'setup';
     let currentSelectedStrategyKey = 'option1';
+    let editingMemberName = null;
 
     function switchTab(tabId) {
         activeTab = tabId;
-        ['setup', 'history', 'summary'].forEach(t => {
+        ['setup', 'history', 'summary', 'settings'].forEach(t => {
             document.getElementById(`tab-${t}`).classList.remove('active');
             document.getElementById(`pane-${t}`).classList.add('hidden');
         });
@@ -213,6 +263,18 @@
         const headerEl = document.getElementById('display-group-name');
         state.groupName = headerEl.innerText.trim();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+        updateTopBarTitle();
+    }
+
+    function updateTopBarTitle() {
+        document.getElementById('top-bar-title').innerText = state.groupName || 'Group Expenses';
+    }
+
+    function updateCurrencySetting() {
+        state.currency = document.getElementById('currency-selector').value;
+        document.getElementById('currency-symbol-indicator').innerText = state.currency;
+        saveAndRefresh();
+        showToast("Currency Updated");
     }
 
     function formatDate(dateStr) {
@@ -241,7 +303,6 @@
         });
 
         if (strategyKey === 'option1') {
-            // PASS 1: Exact One-to-One Matches
             for (let i = 0; i < debtors.length; i++) {
                 if (debtors[i].amount < 0.01) continue;
                 for (let j = 0; j < creditors.length; j++) {
@@ -255,7 +316,6 @@
                 }
             }
 
-            // PASS 2: Complete Liquidation of Minor Creditors (Anti-Fragmentation)
             creditors.sort((a, b) => a.amount - b.amount);
             for (let j = 0; j < creditors.length; j++) {
                 if (creditors[j].amount < 0.01) continue;
@@ -270,7 +330,6 @@
                 }
             }
 
-            // PASS 3: Low-Threshold Avoidance (< $5.00)
             creditors.sort((a, b) => b.amount - a.amount);
             debtors.sort((a, b) => b.amount - a.amount);
             for (let i = 0; i < debtors.length; i++) {
@@ -291,7 +350,6 @@
                 }
             }
 
-            // PASS 4: Greedy Pool Clearing
             let loops = 0;
             while (loops < 200) {
                 debtors.sort((a, b) => b.amount - a.amount);
@@ -445,7 +503,7 @@
         if (editId) { state.expenses[state.expenses.findIndex(e => e.id == editId)] = entry; showToast("Updated"); }
         else { state.expenses.push(entry); showToast("Saved"); }
         resetForm(); saveAndRefresh();
-        switchTab('setup');
+        switchTab('history');
     }
 
     function deleteExpense(id) {
@@ -458,8 +516,12 @@
 
     function confirmClear() {
         confirmHighRisk("Clear all configurations?", () => {
-            state = { groupName: '', people: [], expenses: [] };
+            state = { groupName: '', people: [], expenses: [], currency: '$' };
+            editingMemberName = null;
+            resetMemberInputRow();
             saveAndRefresh();
+            document.getElementById('currency-selector').value = '$';
+            document.getElementById('currency-symbol-indicator').innerText = '$';
             showToast("Cleared");
         });
     }
@@ -482,14 +544,29 @@
             });
         });
         participants = [...members]; 
+        editingMemberName = null;
+        resetMemberInputRow();
         saveAndRefresh();
         showToast("10 records added");
     }
+
+    function toggleDownloadMenu() {
+        document.getElementById('download-menu').classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', function(event) {
+        const wrapper = document.getElementById('download-dropdown-wrapper');
+        const menu = document.getElementById('download-menu');
+        if (wrapper && menu && !wrapper.contains(event.target)) {
+            menu.classList.add('hidden');
+        }
+    });
 
     async function exportToJPG() {
         const scratch = document.getElementById('canvas-scratchpad');
         const prefix = (state.groupName || "Split_Expenses").replace(/\s+/g, '_');
         const cleanTitleName = state.groupName || "Group";
+        const cur = state.currency;
         
         const triggerDownload = (canvas, filename) => {
             const link = document.createElement('a');
@@ -500,14 +577,8 @@
 
         scratch.innerHTML = '';
         const headClone = document.getElementById('main-header').cloneNode(true);
-        const titleWrap = headClone.querySelector('.flex.items-center');
-        if (titleWrap) titleWrap.className = "flex items-center gap-1 w-full";
-        
-        const mainTitle = headClone.querySelector('#display-group-name');
-        if (mainTitle) {
-            mainTitle.className = "text-xl font-800 tracking-tight text-dark outline-none pr-1";
-            mainTitle.innerText = cleanTitleName;
-        }
+        const mainTitle = headClone.querySelector('#top-bar-title');
+        if (mainTitle) mainTitle.innerText = cleanTitleName;
         scratch.appendChild(headClone);
         
         const summaryClone = document.getElementById('unified-metrics-card').cloneNode(true);
@@ -534,12 +605,8 @@
         for (let idx = 0; idx < chronicEntries.length; idx += maxPerChunk) {
             scratch.innerHTML = '';
             const chunkHead = document.getElementById('main-header').cloneNode(true);
-            const chunkTitleWrap = chunkHead.querySelector('.flex.items-center');
-            if (chunkTitleWrap) chunkTitleWrap.className = "flex items-center gap-1 w-full";
-
-            const chunkTitle = chunkHead.querySelector('#display-group-name');
+            const chunkTitle = chunkHead.querySelector('#top-bar-title');
             if (chunkTitle) {
-                chunkTitle.className = "text-base font-800 tracking-tight text-dark outline-none pr-1";
                 const chunkNumber = Math.floor(idx / maxPerChunk) + 1;
                 chunkTitle.innerText = `${cleanTitleName} • Expense (${chunkNumber}/${totalChunks})`;
             }
@@ -555,7 +622,7 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2 w-full">
                         <h4 class="font-800 text-sm text-dark uppercase break-words flex-1">${e.desc}</h4>
-                        <span class="font-mono font-700 text-dark text-sm shrink-0">$${e.amount.toFixed(2)}</span>
+                        <span class="font-mono font-700 text-dark text-sm shrink-0">${cur}${e.amount.toFixed(2)}</span>
                     </div>
                     <div class="text-[10px] font-700 text-slate-400 uppercase pb-1 border-b border-slate-100">
                         ${e.date} • Paid by ${e.payer}
@@ -564,7 +631,7 @@
                         ${Object.entries(e.breakdown).filter(([_, v]) => v !== 0).map(([n, v]) => `
                             <div class="flex justify-between text-[11px] font-700 text-slate-500 uppercase py-0.5">
                                 <span>${n}</span>
-                                <span class="font-mono">$${v.toFixed(2)}</span>
+                                <span class="font-mono">${cur}${v.toFixed(2)}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -582,11 +649,132 @@
         showToast("Snapshots Exported");
     }
 
+    function exportToCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        
+        csvContent += `Group,${state.groupName || 'Group Expenses'}\n\n`;
+        
+        csvContent += "--- EXPENSE DETAILS ---\n";
+        let expenseHeaders = ["Date", "Description", "Payer", "Total Amount"];
+        state.people.forEach(p => expenseHeaders.push(`${p} Share`));
+        csvContent += expenseHeaders.map(h => `"${h}"`).join(",") + "\n";
+        
+        state.expenses.forEach(e => {
+            let row = [
+                e.date,
+                e.desc.replace(/"/g, '""'),
+                e.payer,
+                e.amount.toFixed(2)
+            ];
+            state.people.forEach(p => {
+                row.push((e.breakdown[p] || 0).toFixed(2));
+            });
+            csvContent += row.map(v => `"${v}"`).join(",") + "\n";
+        });
+        
+        csvContent += "\n--- SETTLEMENT PLAN ---\n";
+        let balances = calculateBalances();
+        let plan = calculateSettlements(balances);
+        csvContent += '"From","To","Amount"\n';
+        if (plan.length === 0) {
+            csvContent += '"No Debts","",""\n';
+        } else {
+            plan.forEach(p => {
+                csvContent += `"${p.from}","${p.to}","${p.amount.toFixed(2)}"\n`;
+            });
+        }
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        const prefix = (state.groupName || "Split_Expenses").replace(/\s+/g, '_');
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `${prefix}_Data.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast("CSV Downloaded");
+    }
+
     function addMember() {
-        const name = document.getElementById('new-member-name').value.trim();
-        if (!name || state.people.includes(name)) return showBanner("Invalid name");
-        state.people.push(name); participants = [...state.people];
-        document.getElementById('new-member-name').value = ''; saveAndRefresh();
+        const inputEl = document.getElementById('new-member-name');
+        const name = inputEl.value.trim();
+        if (!name) return showBanner("Invalid name");
+
+        if (editingMemberName) {
+            if (name !== editingMemberName && state.people.includes(name)) return showBanner("Name already exists");
+            
+            const idx = state.people.indexOf(editingMemberName);
+            if (idx !== -1) {
+                state.people[idx] = name;
+                
+                state.expenses.forEach(e => {
+                    if (e.payer === editingMemberName) e.payer = name;
+                    if (e.participants) {
+                        const pIdx = e.participants.indexOf(editingMemberName);
+                        if (pIdx !== -1) e.participants[pIdx] = name;
+                    }
+                    if (e.breakdown && e.breakdown.hasOwnProperty(editingMemberName)) {
+                        e.breakdown[name] = e.breakdown[editingMemberName];
+                        delete e.breakdown[editingMemberName];
+                    }
+                });
+
+                const partIdx = participants.indexOf(editingMemberName);
+                if (partIdx !== -1) participants[partIdx] = name;
+
+                showToast(`Renamed to ${name}`);
+            }
+            editingMemberName = null;
+        } else {
+            if (state.people.includes(name)) return showBanner("Name already exists");
+            state.people.push(name);
+            participants.push(name);
+            showToast(`${name} Added`);
+        }
+
+        resetMemberInputRow();
+        saveAndRefresh();
+    }
+
+    function editMemberBadge(name) {
+        editingMemberName = name;
+        const inputEl = document.getElementById('new-member-name');
+        inputEl.value = name;
+        inputEl.focus();
+        
+        const btn = document.getElementById('add-member-btn');
+        btn.innerText = "Update";
+        btn.classList.remove('bg-primary');
+        btn.classList.add('bg-amber-500');
+    }
+
+    function deleteMemberBadge(name) {
+        confirmHighRisk(`Delete ${name} and related balances?`, () => {
+            state.people = state.people.filter(p => p !== name);
+            participants = participants.filter(p => p !== name);
+            
+            state.expenses.forEach(e => {
+                if (e.participants) e.participants = e.participants.filter(p => p !== name);
+                if (e.breakdown && e.breakdown.hasOwnProperty(name)) delete e.breakdown[name];
+            });
+
+            if (editingMemberName === name) {
+                editingMemberName = null;
+                resetMemberInputRow();
+            }
+
+            saveAndRefresh();
+            showToast(`${name} Removed`);
+        });
+    }
+
+    function resetMemberInputRow() {
+        document.getElementById('new-member-name').value = '';
+        const btn = document.getElementById('add-member-btn');
+        btn.innerText = "Add";
+        btn.classList.remove('bg-amber-500');
+        btn.classList.add('bg-primary');
     }
 
     function saveAndRefresh() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); render(); updateSplitUI(); }
@@ -594,13 +782,18 @@
     function updateSplitUI() {
         const mode = document.getElementById('split-mode').value;
         const total = parseFloat(document.getElementById('amount').value) || 0;
+        const cur = state.currency;
         document.getElementById('people-toggle-list').innerHTML = state.people.map(p => `<button onclick="toggleParticipant('${p}')" class="chip px-2.5 py-1 text-[11px] font-700 uppercase ${participants.includes(p) ? 'active' : 'inactive'}">${p}</button>`).join('');
         const container = document.getElementById('split-details');
-        if (mode === 'even') container.innerHTML = `<div class="p-2 bg-slate-50 rounded-xl text-[10px] font-bold text-slate-400 text-center uppercase">$${(total / (participants.length || 1)).toFixed(2)} each</div>`;
+        if (mode === 'even') container.innerHTML = `<div class="p-2 bg-slate-50 rounded-xl text-[10px] font-bold text-slate-400 text-center uppercase">${cur}${(total / (participants.length || 1)).toFixed(2)} each</div>`;
         else container.innerHTML = participants.map(p => `
             <div class="flex justify-between items-center p-2 bg-slate-50 rounded-lg">
                 <span class="text-[12px] font-700 text-slate-600 uppercase">${p}</span>
-                <input type="number" data-person="${p}" class="split-input w-16 text-right font-mono font-bold bg-transparent border-b border-slate-200 outline-none text-sm">
+                <div class="flex items-center gap-0.5">
+                    <span class="font-mono text-slate-400 font-bold text-xs">${mode === 'exact' || mode === 'adjustment' ? cur : ''}</span>
+                    <input type="number" data-person="${p}" class="split-input w-16 text-right font-mono font-bold bg-transparent border-b border-slate-200 outline-none text-sm">
+                    <span class="font-mono text-slate-400 font-bold text-xs">${mode === 'percent' ? '%' : mode === 'share' ? 'x' : ''}</span>
+                </div>
             </div>`).join('');
     }
 
@@ -630,17 +823,22 @@
     }
 
     function render() {
+        const cur = state.currency;
         document.getElementById('display-group-name').innerText = state.groupName || '';
+        document.getElementById('currency-selector').value = cur;
+        document.getElementById('currency-symbol-indicator').innerText = cur;
+        updateTopBarTitle();
+        
         document.getElementById('payer-select').innerHTML = '<option value="">Payer?</option>' + state.people.map(p => `<option value="${p}">${p}</option>`).join('');
         
         let totalSum = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-        document.getElementById('total-group-amount').innerText = `$${totalSum.toFixed(2)}`;
+        document.getElementById('total-group-amount').innerText = `-${cur}${totalSum.toFixed(2)}`;
 
-        let spentMap = {}; let owedMap = {}; let balances = calculateBalances();
-        state.people.forEach(p => { spentMap[p] = 0; owedMap[p] = 0; });
+        let spentMap = {}; let darkOwedMap = {}; let balances = calculateBalances();
+        state.people.forEach(p => { spentMap[p] = 0; darkOwedMap[p] = 0; });
         state.expenses.forEach(e => {
             if (spentMap.hasOwnProperty(e.payer)) spentMap[e.payer] += e.amount;
-            Object.entries(e.breakdown).forEach(([name, share]) => { if (owedMap.hasOwnProperty(name)) owedMap[name] += share; });
+            Object.entries(e.breakdown).forEach(([name, share]) => { if (darkOwedMap.hasOwnProperty(name)) darkOwedMap[name] += share; });
         });
 
         const rowsContainer = document.getElementById('member-table-rows');
@@ -653,20 +851,32 @@
                 return `
                     <div class="grid grid-cols-[1.3fr_1fr_1fr_1fr] gap-0 py-1.5 items-center text-right text-[11px] font-sans text-slate-600">
                         <span class="text-left font-700 text-dark uppercase px-2 border-r border-slate-100">${p}</span>
-                        <span class="px-1 border-r border-slate-100 font-mono">$${spentMap[p].toFixed(2)}</span>
-                        <span class="px-1 border-r border-slate-100 font-mono">$${owedMap[p].toFixed(2)}</span>
-                        <span class="${balClass} px-2 font-mono">${bal >= 0 ? '+$' : '-$'}${Math.abs(bal).toFixed(2)}</span>
+                        <span class="px-1 border-r border-slate-100 font-mono">${cur}${spentMap[p].toFixed(2)}</span>
+                        <span class="px-1 border-r border-slate-100 font-mono">${cur}${darkOwedMap[p].toFixed(2)}</span>
+                        <span class="${balClass} px-2 font-mono">${bal >= 0 ? '+' : '-'}${cur}${Math.abs(bal).toFixed(2)}</span>
                     </div>`;
             }).join('');
         }
 
+        const badgesContainer = document.getElementById('settings-member-badges');
+        if (state.people.length === 0) {
+            badgesContainer.innerHTML = `<p class="text-[11px] font-bold text-slate-300 uppercase py-1">No members added yet</p>`;
+        } else {
+            badgesContainer.innerHTML = state.people.map(p => `
+                <div class="inline-flex items-center bg-slate-100 text-dark text-[11px] font-700 uppercase tracking-wide px-2.5 py-1 rounded-full gap-1.5 border border-slate-200">
+                    <span onclick="editMemberBadge('${p}')" class="cursor-pointer hover:text-primary transition-colors">${p}</span>
+                    <button onclick="deleteMemberBadge('${p}')" class="text-slate-400 hover:text-rose-500 font-bold ml-0.5 text-xs select-none">×</button>
+                </div>
+            `).join('');
+        }
+
         const plan = calculateSettlements(balances);
-        document.getElementById('settlement-list').innerHTML = plan.length === 0 ? '<p class="text-center text-[11px] font-700 text-primary uppercase">No Debts</p>' : plan.map(p => `<div class="flex justify-between p-1.5 bg-white rounded-md text-[11px] font-700 text-dark uppercase"><span>${p.from} <span class="text-indigo-200">➜</span> ${p.to}</span><span class="font-mono">$${p.amount.toFixed(2)}</span></div>`).join('');
+        document.getElementById('settlement-list').innerHTML = plan.length === 0 ? '<p class="text-center text-[11px] font-700 text-primary uppercase">No Debts</p>' : plan.map(p => `<div class="flex justify-between p-1.5 bg-white rounded-md text-[11px] font-700 text-dark uppercase"><span>${p.from} <span class="text-indigo-200">➜</span> ${p.to}</span><span class="font-mono">${cur}${p.amount.toFixed(2)}</span></div>`).join('');
         
         const history = document.getElementById('transaction-body');
         history.innerHTML = state.expenses.slice().reverse().map(e => `
             <div class="soft-card p-3 cursor-pointer hover:shadow-md transition-all" onclick="toggleRow(${e.id})">
-                <div class="flex justify-between items-center"><h4 class="font-800 text-sm text-dark uppercase truncate max-w-[220px]">${e.desc}</h4><span class="font-mono font-700 text-dark text-sm">$${e.amount.toFixed(2)}</span></div>
+                <div class="flex justify-between items-center"><h4 class="font-800 text-sm text-dark uppercase truncate max-w-[220px]">${e.desc}</h4><span class="font-mono font-700 text-dark text-sm">${cur}${e.amount.toFixed(2)}</span></div>
                 <div class="flex justify-between items-center mt-1 text-[10px] font-700 text-slate-400 uppercase">
                     <div>${e.date} • ${e.payer}</div>
                     <div class="flex gap-3" data-html2canvas-ignore>
@@ -675,7 +885,7 @@
                     </div>
                 </div>
                 <div class="expandable ${expandedId === e.id ? 'expanded' : ''}">
-                    ${Object.entries(e.breakdown).filter(([_, v]) => v !== 0).map(([n, v]) => `<div class="flex justify-between text-[11px] font-700 text-slate-500 uppercase py-0.5"><span>${n}</span><span class="font-mono">$${v.toFixed(2)}</span></div>`).join('')}
+                    ${Object.entries(e.breakdown).filter(([_, v]) => v !== 0).map(([n, v]) => `<div class="flex justify-between text-[11px] font-700 text-slate-500 uppercase py-0.5"><span>${n}</span><span class="font-mono">${cur}${v.toFixed(2)}</span></div>`).join('')}
                 </div>
             </div>`).join('') || '<p class="text-center py-6 text-slate-300 font-800 uppercase text-[11px]">Empty Ledger</p>';
     }
