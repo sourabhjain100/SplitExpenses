@@ -138,7 +138,7 @@
             <div class="flex justify-between items-center pb-2 border-b border-slate-100">
                 <div class="text-left">
                     <p class="text-[10px] font-800 text-slate-400 uppercase tracking-widest">Total Group Expense</p>
-                    <p id="total-group-amount" class="text-2xl font-mono font-900 text-dark">-$0.00</p>
+                    <p id="total-group-amount" class="text-2xl font-mono font-900 text-dark">$0.00</p>
                 </div>
                 <div class="flex gap-1.5 relative" data-html2canvas-ignore id="download-dropdown-wrapper">
                     <button onclick="toggleDownloadMenu()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-800 py-1.5 px-3 rounded-full uppercase transition-colors shadow-sm flex items-center gap-1">
@@ -832,7 +832,7 @@
         document.getElementById('payer-select').innerHTML = '<option value="">Payer?</option>' + state.people.map(p => `<option value="${p}">${p}</option>`).join('');
         
         let totalSum = state.expenses.reduce((sum, e) => sum + e.amount, 0);
-        document.getElementById('total-group-amount').innerText = `-${cur}${totalSum.toFixed(2)}`;
+        document.getElementById('total-group-amount').innerText = `${cur}${totalSum.toFixed(2)}`;
 
         let spentMap = {}; let darkOwedMap = {}; let balances = calculateBalances();
         state.people.forEach(p => { spentMap[p] = 0; darkOwedMap[p] = 0; });
