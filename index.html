@@ -207,17 +207,10 @@
             <div id="settlement-list" class="space-y-0 border border-indigo-100 rounded-lg overflow-hidden bg-white"></div>
         </section>
 
-        <div class="flex justify-end pt-2" data-html2canvas-ignore id="download-dropdown-wrapper">
-            <div class="relative">
-                <button onclick="toggleDownloadMenu()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-800 py-1.5 px-3 rounded-full uppercase transition-colors shadow-sm flex items-center gap-1">
-                    Download
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                </button>
-                <div id="download-menu" class="hidden absolute right-0 bottom-full mb-1 w-24 bg-white rounded-lg shadow-xl z-50 border border-slate-100 overflow-hidden">
-                    <button onclick="exportToJPG(); toggleDownloadMenu()" class="w-full text-left px-3 py-2 text-[10px] font-800 text-slate-600 hover:bg-slate-50 hover:text-primary uppercase border-b border-slate-50 transition-colors">Image</button>
-                    <button onclick="exportToCSV(); toggleDownloadMenu()" class="w-full text-left px-3 py-2 text-[10px] font-800 text-slate-600 hover:bg-slate-50 hover:text-primary uppercase transition-colors">CSV</button>
-                </div>
-            </div>
+        <div class="flex justify-end gap-2 pt-2" data-html2canvas-ignore id="download-dropdown-wrapper">
+            <button onclick="exportToJPG()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-800 py-1.5 px-3 rounded-full uppercase transition-colors shadow-sm">Image</button>
+            <button onclick="exportToCSV()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-800 py-1.5 px-3 rounded-full uppercase transition-colors shadow-sm">CSV</button>
+            <button onclick="exportToHTML()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-800 py-1.5 px-3 rounded-full uppercase transition-colors shadow-sm">HTML</button>
         </div>
     </div>
 
@@ -765,18 +758,6 @@
         showToast("10 records added");
     }
 
-    function toggleDownloadMenu() {
-        document.getElementById('download-menu').classList.toggle('hidden');
-    }
-
-    document.addEventListener('click', function(event) {
-        const wrapper = document.getElementById('download-dropdown-wrapper');
-        const menu = document.getElementById('download-menu');
-        if (wrapper && menu && !wrapper.contains(event.target)) {
-            menu.classList.add('hidden');
-        }
-    });
-
     async function exportToJPG() {
         const scratch = document.getElementById('canvas-scratchpad');
         const prefix = (state.groupName || "Split_Expenses").replace(/\s+/g, '_');
@@ -929,6 +910,148 @@
         document.body.removeChild(link);
         
         showToast("CSV Downloaded");
+    }
+
+    function exportToHTML() {
+        const groupTitle = state.groupName ? state.groupName.replace(/\s+/g, '_') : 'Group';
+        const formattedDate = getFormattedTodayDate().replace(/\s+/g, '_');
+        const fileName = `Expenses_${groupTitle}_${formattedDate}.html`;
+        
+        const cur = state.currency || '$';
+        const balances = calculateBalances();
+        const plan = calculateSettlements(balances);
+        
+        let spentMap = {}; let darkOwedMap = {};
+        state.people.forEach(p => { spentMap[p] = 0; darkOwedMap[p] = 0; });
+        state.expenses.forEach(e => {
+            if (spentMap.hasOwnProperty(e.payer)) spentMap[e.payer] += e.amount;
+            Object.entries(e.breakdown).forEach(([name, share]) => { if (darkOwedMap.hasOwnProperty(name)) darkOwedMap[name] += share; });
+        });
+
+        const gridCols = isRoundAmtEnabled 
+            ? "grid-cols-[1.1fr_0.9fr_0.9fr_0.9fr_1fr]" 
+            : "grid-cols-[1.3fr_1fr_1fr_1fr]";
+
+        const tableHeaderHTML = isRoundAmtEnabled
+            ? `<div class="grid ${gridCols} bg-slate-100 text-[10px] font-800 text-slate-500 uppercase tracking-wider text-right py-2 px-1">
+                <span class="text-left px-2">Member</span>
+                <span>Spent</span>
+                <span>Owed</span>
+                <span>Net</span>
+                <span class="px-2">Rounded</span>
+               </div>`
+            : `<div class="grid ${gridCols} bg-slate-100 text-[10px] font-800 text-slate-500 uppercase tracking-wider text-right py-2 px-1">
+                <span class="text-left px-2">Member</span>
+                <span>Spent</span>
+                <span>Owed</span>
+                <span class="px-2">Net</span>
+               </div>`;
+
+        const rowsHTML = state.people.map(p => {
+            const bal = balances[p] || 0;
+            const balClass = bal >= 0 ? 'text-emerald-500 font-bold' : 'text-rose-500 font-bold';
+            
+            if (isRoundAmtEnabled) {
+                const roundedVal = getClosestRoundValue(bal);
+                const roundClass = roundedVal >= 0 ? 'text-emerald-500 font-bold' : 'text-rose-500 font-bold';
+                return `<div class="grid ${gridCols} py-1.5 text-right text-[11px] border-t border-slate-100 px-1 font-sans text-slate-600">
+                    <span class="text-left font-700 text-slate-800 uppercase px-2">${p}</span>
+                    <span class="font-mono">${cur}${spentMap[p].toFixed(2)}</span>
+                    <span class="font-mono">${cur}${darkOwedMap[p].toFixed(2)}</span>
+                    <span class="font-mono ${balClass}">${cur}${Math.abs(bal).toFixed(2)}</span>
+                    <span class="font-mono ${roundClass} px-2">${cur}${Math.abs(roundedVal).toFixed(2)}</span>
+                </div>`;
+            } else {
+                return `<div class="grid ${gridCols} py-1.5 text-right text-[11px] border-t border-slate-100 px-1 font-sans text-slate-600">
+                    <span class="text-left font-700 text-slate-800 uppercase px-2">${p}</span>
+                    <span class="font-mono">${cur}${spentMap[p].toFixed(2)}</span>
+                    <span class="font-mono">${cur}${darkOwedMap[p].toFixed(2)}</span>
+                    <span class="font-mono ${balClass} px-2">${cur}${Math.abs(bal).toFixed(2)}</span>
+                </div>`;
+            }
+        }).join('');
+
+        const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${state.groupName || 'Group Expenses'} - Web Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800;900&family=JetBrains+Mono:wght=600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <style>
+        body { background-color: #F1F5F9; color: #334155; font-family: 'Inter', sans-serif; }
+        .soft-card { background: white; border-radius: 16px; box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03); border: 1px solid rgba(255,255,255,0.8); }
+    </style>
+</head>
+<body class="p-4 text-sm max-w-md mx-auto space-y-3">
+    <header class="soft-card p-3 bg-white text-center">
+        <h1 class="text-xl font-800 text-slate-800">${state.groupName || 'Group Expenses'}</h1>
+        <p class="text-[10px] font-700 text-slate-400 mt-0.5">Exported on ${getFormattedTodayDate()}</p>
+    </header>
+
+    <section class="soft-card p-3 bg-white space-y-3">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+            <span class="text-[10px] font-800 text-slate-400 uppercase tracking-widest">Total Group Expense</span>
+            <span class="text-base font-mono font-900 text-slate-800">${cur}${state.expenses.reduce((s, e) => s + e.amount, 0).toFixed(2)}</span>
+        </div>
+        
+        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+            ${tableHeaderHTML}
+            ${rowsHTML}
+        </div>
+    </section>
+
+    <section class="soft-card p-3 space-y-2 bg-indigo-50/40 border-indigo-100 border">
+        <h2 class="text-[10px] font-800 text-indigo-600 uppercase tracking-widest">Who Pays Whom</h2>
+        <div class="border border-indigo-100 rounded-lg overflow-hidden bg-white divide-y divide-indigo-100">
+            ${plan.length === 0 ? '<p class="text-center text-[11px] font-700 text-indigo-600 p-2 uppercase">No Debts</p>' : plan.map(p => `
+                <div class="flex justify-between items-center p-2 text-[11px] font-700 text-slate-700 uppercase">
+                    <span>${p.from} <span class="text-indigo-400 mx-1">➔</span> ${p.to}</span>
+                    <span class="font-mono text-indigo-600">${cur}${p.amount.toFixed(2)}</span>
+                </div>
+            `).join('')}
+        </div>
+    </section>
+
+    <section class="space-y-2">
+        <h2 class="text-[11px] font-800 text-slate-400 uppercase tracking-widest px-1">Transactions Ledger</h2>
+        <div class="space-y-2">
+            ${state.expenses.slice().reverse().map(e => `
+                <div class="soft-card p-3 bg-white space-y-1">
+                    <div class="flex justify-between items-center font-800 text-sm text-slate-800 uppercase">
+                        <span>${e.desc}</span>
+                        <span class="font-mono">${cur}${e.amount.toFixed(2)}</span>
+                    </div>
+                    <div class="text-[10px] font-700 text-slate-400 uppercase border-b border-slate-100 pb-1">
+                        ${e.date} • Paid by ${e.payer}
+                    </div>
+                    <div class="pt-1 space-y-0.5">
+                        ${Object.entries(e.breakdown).filter(([_, v]) => v !== 0).map(([n, v]) => `
+                            <div class="flex justify-between text-[11px] font-700 text-slate-500 uppercase">
+                                <span>${n}</span>
+                                <span class="font-mono">${cur}${v.toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    </section>
+</body>
+</html>`;
+
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showToast("Web Page Exported");
     }
 
     function addMember() {
